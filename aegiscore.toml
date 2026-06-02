@@ -1,0 +1,18 @@
+[llm]
+base_url = "https://api.openai.com/v1"
+model = "gpt-4.1-mini"
+api_key_env = "OPENAI_API_KEY"
+
+[runtime]
+max_tool_rounds = 8
+allow_dangerous_tools = false
+fs_root = "."
+max_read_bytes = 1048576
+max_write_bytes = 1048576
+http_max_bytes = 2097152
+http_timeout_ms = 15000
+shell_timeout_ms = 15000
+
+[server]
+host = "127.0.0.1"
+port = 8787
