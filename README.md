@@ -18,6 +18,13 @@ Status: early-stage / experimental.
 
 Prereqs: Rust toolchain (stable).
 
+Clone the repo:
+
+```bash
+git clone https://github.com/edujbarrios/AegisCore.git
+cd AegisCore
+```
+
 Initialize a workspace (creates `docs/`, `examples/`, `skills/`, `modules/`, plus `aegiscore.toml` and `.env.example` if missing):
 
 ```bash
