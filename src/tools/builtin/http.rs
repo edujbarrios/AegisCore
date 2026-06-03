@@ -48,7 +48,6 @@ impl ToolHandler for HttpGetTool {
             .min(ctx.http_max_bytes);
 
         let parsed = reqwest::Url::parse(url)?;
-        enforce_http_url_policy(&parsed)?;
 
         let mut headers = HeaderMap::new();
         if let Some(map) = args.get("headers").and_then(|v| v.as_object()) {
@@ -61,32 +60,55 @@ impl ToolHandler for HttpGetTool {
 
         let client = reqwest::Client::builder()
             .timeout(Duration::from_millis(timeout_ms))
+            .redirect(reqwest::redirect::Policy::none())
             .build()?;
 
-        let resp = client
-            .get(parsed)
-            .headers(headers)
-            .send()
-            .await?
-            .error_for_status()?;
-        let status = resp.status().as_u16();
-        let bytes = resp.bytes().await?;
-        let truncated = (bytes.len() as u64) > max_bytes;
-        let limited = if truncated {
-            bytes.slice(0..(max_bytes as usize))
-        } else {
-            bytes
-        };
-        let body = String::from_utf8_lossy(&limited).to_string();
-        Ok(serde_json::json!({
-            "status": status,
-            "truncated": truncated,
-            "body": body
-        }))
+        const MAX_REDIRECTS: usize = 5;
+        let mut current = parsed;
+        for step in 0..=MAX_REDIRECTS {
+            enforce_http_url_policy(&current).await?;
+
+            let resp = client
+                .get(current.clone())
+                .headers(headers.clone())
+                .send()
+                .await?;
+
+            if resp.status().is_redirection() {
+                if step == MAX_REDIRECTS {
+                    anyhow::bail!("too many redirects");
+                }
+                let loc = resp
+                    .headers()
+                    .get(reqwest::header::LOCATION)
+                    .and_then(|v| v.to_str().ok())
+                    .ok_or_else(|| anyhow::anyhow!("redirect missing Location header"))?;
+                current = current.join(loc)?;
+                continue;
+            }
+
+            let resp = resp.error_for_status()?;
+            let status = resp.status().as_u16();
+            let bytes = resp.bytes().await?;
+            let truncated = (bytes.len() as u64) > max_bytes;
+            let limited = if truncated {
+                bytes.slice(0..(max_bytes as usize))
+            } else {
+                bytes
+            };
+            let body = String::from_utf8_lossy(&limited).to_string();
+            return Ok(serde_json::json!({
+                "status": status,
+                "truncated": truncated,
+                "body": body
+            }));
+        }
+
+        anyhow::bail!("unreachable")
     }
 }
 
-fn enforce_http_url_policy(url: &reqwest::Url) -> anyhow::Result<()> {
+async fn enforce_http_url_policy(url: &reqwest::Url) -> anyhow::Result<()> {
     match url.scheme() {
         "http" | "https" => {}
         _ => anyhow::bail!("unsupported scheme"),
@@ -100,10 +122,27 @@ fn enforce_http_url_policy(url: &reqwest::Url) -> anyhow::Result<()> {
         anyhow::bail!("localhost domains are blocked");
     }
 
+    let port = url
+        .port_or_known_default()
+        .ok_or_else(|| anyhow::anyhow!("url missing port"))?;
+
     if let Ok(ip) = host.parse::<IpAddr>() {
         if is_blocked_ip(ip) {
             anyhow::bail!("private/loopback/link-local IPs are blocked");
         }
+        return Ok(());
+    }
+
+    let addrs = tokio::net::lookup_host((host, port)).await?;
+    let mut saw_any = false;
+    for addr in addrs {
+        saw_any = true;
+        if is_blocked_ip(addr.ip()) {
+            anyhow::bail!("private/loopback/link-local IPs are blocked");
+        }
+    }
+    if !saw_any {
+        anyhow::bail!("host did not resolve to any IPs");
     }
 
     Ok(())
@@ -127,5 +166,33 @@ fn is_blocked_ip(ip: IpAddr) -> bool {
                 || v6.is_unicast_link_local()
                 || v6 == Ipv6Addr::LOCALHOST
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn blocks_private_ipv4() {
+        assert!(is_blocked_ip(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1))));
+        assert!(is_blocked_ip(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))));
+        assert!(is_blocked_ip(IpAddr::V4(Ipv4Addr::new(169, 254, 1, 2))));
+    }
+
+    #[tokio::test]
+    async fn blocks_localhost_domain() {
+        let url = reqwest::Url::parse("http://localhost:1234/").unwrap();
+        let err = enforce_http_url_policy(&url).await.unwrap_err();
+        assert!(err.to_string().contains("localhost domains are blocked"));
+    }
+
+    #[tokio::test]
+    async fn blocks_loopback_ip() {
+        let url = reqwest::Url::parse("http://127.0.0.1:1234/").unwrap();
+        let err = enforce_http_url_policy(&url).await.unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("private/loopback/link-local IPs are blocked"));
     }
 }

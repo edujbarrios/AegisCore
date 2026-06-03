@@ -41,7 +41,7 @@ impl OpenAiProvider {
             base.push_str("/v1");
         }
         let url = format!("{base}/chat/completions");
-        Ok(reqwest::Url::parse(&url).context("parse base_url")?)
+        reqwest::Url::parse(&url).context("parse base_url")
     }
 }
 
