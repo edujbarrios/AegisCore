@@ -39,7 +39,7 @@ impl AgentRuntime {
             Ok(p) => Arc::new(p),
             Err(err) => {
                 warn!(%err, "falling back to LocalProvider (no LLM credentials configured)");
-                Arc::new(LocalProvider::default())
+                Arc::new(LocalProvider)
             }
         };
         let allowed_tools = entry.spec.allowed_tools.clone();
