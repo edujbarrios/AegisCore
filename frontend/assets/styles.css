@@ -117,9 +117,13 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1rem;
+  align-items: stretch;
 }
 
 .card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -134,20 +138,29 @@ h1 {
 }
 
 .card p {
+  margin: 0.7rem 0 0;
   color: var(--muted);
   line-height: 1.45;
 }
 
+.card .description {
+  flex: 1;
+}
+
 .meta {
   font-size: 0.83rem;
-  margin-top: 0.65rem;
+  margin-top: 0.7rem;
   color: #c9d1d9;
 }
 
 .card-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 0.9rem;
+}
+
+.card-actions .button {
+  flex: 1;
 }
 
 .dialog {

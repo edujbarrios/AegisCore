@@ -56,6 +56,7 @@ function renderSkillCards(skills) {
     const title = document.createElement("h2");
     title.textContent = skill.name;
     const description = document.createElement("p");
+    description.className = "description";
     description.textContent = skill.description;
     const meta = document.createElement("p");
     meta.className = "meta";
