@@ -7,7 +7,7 @@ Status: early-stage / experimental.
 ## What you get
 
 - **CLI + HTTP server** to create, list, inspect, run, and delete skills.
-- **Declarative skills** stored as `skills/*.toml` or `skills/*.json` (validated with JSON Schema).
+- **Declarative skills** stored as `skills/*.toml`, `skills/*.json`, or `skills/*.md` (validated with JSON Schema).
 - **Tool allowlisting** per-skill (`allowed_tools`) with OpenAI-style function tool definitions.
 - **Safe defaults**:
   - Filesystem tools are sandboxed to a configurable root and block `..` traversal and absolute paths.
@@ -77,7 +77,7 @@ Key settings:
 
 ## Skill format
 
-Skills are TOML/JSON documents with the following required fields:
+Skills are TOML/JSON documents (or Markdown with TOML frontmatter) with the following required fields:
 `name`, `version`, `description`, `author`, `license`, `system_prompt`, `allowed_tools`.
 
 Minimal TOML example:
@@ -90,6 +90,20 @@ author = "Your Name"
 license = "Apache-2.0"
 system_prompt = "You are a helpful summarizer."
 allowed_tools = ["read_file", "text_summarize"]
+```
+
+Minimal Markdown example (frontmatter + body). The Markdown body is used as the `system_prompt` that gets sent straight to the agent as its `system` message:
+
+```md
++++
+name = "pdf_summarizer"
+version = "0.1.0"
+description = "Summarize a PDF into a short brief."
+author = "Your Name"
+license = "Apache-2.0"
+allowed_tools = ["read_file", "text_summarize"]
++++
+You are a helpful summarizer.
 ```
 
 ## HTTP API (server mode)
