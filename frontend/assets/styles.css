@@ -94,13 +94,19 @@ h1 {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(64, 224, 208, 0.45);
   color: #0d0d0d;
   background: linear-gradient(135deg, rgba(64, 224, 208, 0.95), rgba(102, 230, 221, 0.92));
   border-radius: 999px;
+  min-height: 2.4rem;
   padding: 0.58rem 1rem;
   cursor: pointer;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .button:hover {
