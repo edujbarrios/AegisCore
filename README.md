@@ -1,12 +1,12 @@
-<p align="center">
-  <img src="docs/images/frontend-dark.png" alt="AegisCore skills frontend" />
-</p>
+
 
 <h1 align="center">AegisCore</h1>
 
 <p align="center"><strong>Local-first runtime to build, validate, and run declarative Codex-style skills.</strong></p>
 
-Status: early-stage / experimental.
+<p align="center">
+  <img src="docs/images/frontend-dark.png" alt="AegisCore skills frontend" />
+</p>
 
 ## Why AegisCore
 
