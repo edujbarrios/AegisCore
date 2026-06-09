@@ -1,6 +1,4 @@
 +++
-+++
-+++
 name = "github_commit"
 version = "0.1.0"
 description = "Generate a Conventional Commit message for GitHub from a diff/summary input."
@@ -43,5 +41,6 @@ Return exactly one object with this shape:
 - Choose a scope when confident; otherwise `null`. Use `scope_hint` if it matches the change.
 - If the change is breaking, set `breaking=true` and include a `BREAKING CHANGE: ...` footer.
 - Include issue refs as footers like `Refs: #123` or `Closes: #123` only when the input implies it.
+- `body` may use Markdown formatting (lists, emphasis) but must still read well as a plain Git commit message.
 - If the input lacks enough signal to pick a type/scope/description confidently, set `needs_more_info=true`, ask up to 3 questions, and still provide your best-effort `commit` draft.
 - `full_message` must be composed from `type`, optional `(scope)`, `description`, then blank line + `body` (if present), then blank line + each footer on its own line (if any).
