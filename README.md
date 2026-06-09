@@ -5,7 +5,7 @@
 <p align="center"><strong>Local-first runtime to build, validate, and run declarative Codex-style skills.</strong></p>
 
 <p align="center">
-  <img src="docs/images/frontend-dark.png" alt="AegisCore skills frontend" />
+  <img src="https://github.com/user-attachments/assets/4b12e8ea-d84c-414f-8377-22400366ba61" alt="AegisCore skills frontend with uniform card layout" />
 </p>
 
 ## Why AegisCore
