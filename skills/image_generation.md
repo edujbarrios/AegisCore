@@ -1,11 +1,12 @@
-+++
-name = "image_generation"
-version = "0.1.0"
-description = "Generate a complete, parameterized image creation spec and prompt package."
-author = "AegisCore"
-license = "Apache-2.0"
-allowed_tools = []
-+++
+---
+name: image_generation
+description: Generate a complete, parameterized image creation spec and prompt package.
+argument-hint: "[goal or JSON image requirements]"
+version: "0.1.0"
+author: "AegisCore"
+license: "Apache-2.0"
+allowed-tools: []
+---
 You are an image-generation specification writer.
 
 You will receive the user message as a JSON object (stringified) or plain text.

@@ -147,36 +147,14 @@ struct SkillMarkdownFrontmatter {
     description: String,
     author: String,
     license: String,
+    #[serde(alias = "allowed-tools")]
     allowed_tools: Vec<String>,
+    #[serde(alias = "system-prompt")]
     system_prompt: Option<String>,
 }
 
 fn parse_markdown_skill(raw: &str, path: &Path) -> anyhow::Result<SkillSpec> {
-    let mut lines = raw.lines();
-    let first = lines
-        .next()
-        .ok_or_else(|| anyhow::anyhow!("empty markdown skill: {path:?}"))?;
-    let first = first.trim_start_matches('\u{feff}');
-    if first.trim() != "+++" {
-        anyhow::bail!("markdown skill must start with TOML frontmatter delimiter (+++): {path:?}");
-    }
-
-    let mut frontmatter = String::new();
-    let mut found_end = false;
-    for line in lines.by_ref() {
-        if line.trim() == "+++" {
-            found_end = true;
-            break;
-        }
-        frontmatter.push_str(line);
-        frontmatter.push('\n');
-    }
-    if !found_end {
-        anyhow::bail!("markdown skill missing closing frontmatter delimiter (+++): {path:?}");
-    }
-
-    let fm: SkillMarkdownFrontmatter = toml::from_str(&frontmatter)
-        .with_context(|| format!("parse markdown frontmatter: {path:?}"))?;
+    let (fm, lines) = parse_frontmatter(raw, path)?;
 
     let body = lines.collect::<Vec<_>>().join("\n");
     let body_prompt = body.trim();
@@ -202,6 +180,47 @@ fn parse_markdown_skill(raw: &str, path: &Path) -> anyhow::Result<SkillSpec> {
         system_prompt,
         allowed_tools: fm.allowed_tools,
     })
+}
+
+fn parse_frontmatter<'a>(
+    raw: &'a str,
+    path: &Path,
+) -> anyhow::Result<(SkillMarkdownFrontmatter, std::str::Lines<'a>)> {
+    let mut lines = raw.lines();
+    let first = lines
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("empty markdown skill: {path:?}"))?;
+    let first = first.trim_start_matches('\u{feff}');
+    let delimiter = first.trim();
+    if delimiter != "+++" && delimiter != "---" {
+        anyhow::bail!(
+            "markdown skill must start with frontmatter delimiter (+++ for TOML or --- for YAML): {path:?}"
+        );
+    }
+
+    let mut frontmatter = String::new();
+    let mut found_end = false;
+    for line in lines.by_ref() {
+        if line.trim() == delimiter {
+            found_end = true;
+            break;
+        }
+        frontmatter.push_str(line);
+        frontmatter.push('\n');
+    }
+    if !found_end {
+        anyhow::bail!(
+            "markdown skill missing closing frontmatter delimiter ({delimiter}): {path:?}"
+        );
+    }
+
+    let fm: SkillMarkdownFrontmatter = if delimiter == "+++" {
+        toml::from_str(&frontmatter).with_context(|| format!("parse TOML frontmatter: {path:?}"))?
+    } else {
+        serde_yaml::from_str(&frontmatter)
+            .with_context(|| format!("parse YAML frontmatter: {path:?}"))?
+    };
+    Ok((fm, lines))
 }
 
 #[cfg(test)]
@@ -247,6 +266,24 @@ system_prompt = "Hello from frontmatter."
         let err = parse_markdown_skill(raw, Path::new("skills/x.md")).unwrap_err();
         assert!(err
             .to_string()
-            .contains("must start with TOML frontmatter delimiter"));
+            .contains("must start with frontmatter delimiter"));
+    }
+
+    #[test]
+    fn parses_yaml_frontmatter_and_body() {
+        let raw = r#"---
+name: discussion
+version: 0.1.0
+description: Have an interactive discussion about a topic.
+author: AegisCore
+license: Apache-2.0
+allowed-tools:
+  - read_file
+---
+You are a discussion agent."#;
+        let spec = parse_markdown_skill(raw, Path::new("skills/discussion.md")).unwrap();
+        assert_eq!(spec.name, "discussion");
+        assert_eq!(spec.allowed_tools, vec!["read_file"]);
+        assert_eq!(spec.system_prompt, "You are a discussion agent.");
     }
 }
