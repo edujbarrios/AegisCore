@@ -1,6 +1,6 @@
 # AegisCore
 
-An open-source Rust runtime for managing declarative “skills” and executing OpenAI-compatible tool-calling with secure-by-default built-in tools.
+AegisCore is the rust based software to display and interact with codex skills used by Eduardo J. Barrios.
 
 Status: early-stage / experimental.
 
@@ -80,6 +80,17 @@ Start the HTTP server:
 ```bash
 cargo run -- serve
 ```
+
+Then open the skills frontend at `http://127.0.0.1:8787/`.
+
+## Skills Frontend
+
+The built-in dark themed TypeScript frontend renders skills as interactive cards with quick actions to:
+- open full skill details
+- copy the system prompt
+- copy full skill JSON for paste-ready sharing
+
+![AegisCore skills frontend](docs/images/frontend-dark.png)
 
 ## Configuration
 

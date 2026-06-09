@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AegisCore Skills</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="glow glow-left" aria-hidden="true"></div>
+    <div class="glow glow-right" aria-hidden="true"></div>
+
+    <header class="hero">
+      <p class="eyebrow">AegisCore</p>
+      <h1>Codex Skills Deck</h1>
+      <p class="tagline">
+        AegisCore is the rust based software to display and interact with codex skills used by Eduardo J. Barrios.
+      </p>
+    </header>
+
+    <main class="shell">
+      <section class="toolbar" aria-label="Actions">
+        <button id="refreshButton" class="button">Refresh Skills</button>
+        <span id="statusText" role="status" aria-live="polite">Loading skills...</span>
+      </section>
+
+      <section>
+        <div id="skillsGrid" class="cards" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <dialog id="skillDialog" class="dialog">
+      <article>
+        <h2 id="dialogTitle"></h2>
+        <p id="dialogMeta" class="dialog-meta"></p>
+
+        <h3>System Prompt</h3>
+        <pre id="dialogPrompt"></pre>
+
+        <h3>Allowed Tools</h3>
+        <ul id="dialogTools"></ul>
+
+        <h3>Skill JSON</h3>
+        <pre id="dialogJson"></pre>
+
+        <footer class="dialog-actions">
+          <button id="copySkillButton" class="button">Copy JSON</button>
+          <button id="closeDialogButton" class="button ghost">Close</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>
