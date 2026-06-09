@@ -56,6 +56,10 @@ Run a skill (if no LLM credentials are configured, AegisCore falls back to a loc
 cargo run -- run pdf_summarizer --input input.json
 ```
 
+This repo also includes a couple of ready-to-use Markdown skills in `skills/`:
+- `github_commit` - drafts a Conventional Commit message from a diff/summary input
+- `github_pr` - drafts a GitHub PR title + body from a diff/summary input
+
 Start the HTTP server:
 
 ```bash
