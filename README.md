@@ -61,10 +61,12 @@ This repo also includes a couple of ready-to-use Markdown skills in `skills/`:
 - `github_pr` - drafts a GitHub PR title + body from a diff/summary input
 - `frontend-bug-reproducer` - turns frontend bug reports into a minimal repro + Playwright test + GitHub-ready report
 - `paper_research` - researches and curates academic papers for a topic using public scholarly APIs
+- `image_generation` - outputs a complete, parameterized image-generation spec with production-ready prompts
 
 `github_commit` and `github_pr` emit **strict JSON**. The generated text is ready to paste: `github_commit.commit.full_message` is a complete Conventional Commit message, and `github_pr.pr.body_markdown` is a Markdown PR description.
 
 `frontend-bug-reproducer` emits a **single GitHub-ready Markdown report** (inside the `output` string).
+`image_generation` emits **strict JSON** with prompt, negative prompt, alternatives, and full generation parameters.
 
 Example input (`input.json`):
 
