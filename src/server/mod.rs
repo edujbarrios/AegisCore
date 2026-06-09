@@ -10,12 +10,13 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::middleware::{from_fn_with_state, Next};
 use axum::routing::{get, post};
-use axum::{http::Request, response::Response, Json, Router};
+use axum::{http::Request, response::Html, response::Response, Json, Router};
 use serde_json::Value;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use tokio::sync::Semaphore;
+use tower_http::services::ServeDir;
 
 use state::AppState;
 use state::RateLimiter;
@@ -56,6 +57,8 @@ pub async fn serve(cfg: AegisConfig) -> anyhow::Result<()> {
 
     let app = Router::new()
         .layer(from_fn_with_state(state.clone(), rate_limit))
+        .route("/", get(frontend_index))
+        .nest_service("/assets", ServeDir::new("frontend/assets"))
         .route("/health", get(health))
         .route("/skills", get(list_skills))
         .route("/skills/{name}", get(get_skill).delete(delete_skill))
@@ -86,6 +89,10 @@ async fn rate_limit(
 
 async fn health() -> Json<Value> {
     Json(serde_json::json!({"status":"ok"}))
+}
+
+async fn frontend_index() -> Html<&'static str> {
+    Html(include_str!("../../frontend/index.html"))
 }
 
 async fn list_modules() -> Json<Value> {
