@@ -1,6 +1,7 @@
 use crate::skills::{skill_schema, SkillSpec};
 use anyhow::Context as _;
 use jsonschema::JSONSchema;
+use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -33,7 +34,7 @@ impl SkillStore {
                 continue;
             }
             let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
-            if matches!(ext, "json" | "toml") {
+            if matches!(ext, "json" | "toml" | "md") {
                 out.push(path);
             }
         }
@@ -61,6 +62,7 @@ impl SkillStore {
         for candidate in [
             self.dir.join(format!("{name}.toml")),
             self.dir.join(format!("{name}.json")),
+            self.dir.join(format!("{name}.md")),
         ] {
             if candidate.exists() {
                 let spec = Self::load_one_with_schema(&compiled, &candidate)?;
@@ -100,6 +102,7 @@ impl SkillStore {
         for candidate in [
             self.dir.join(format!("{name}.toml")),
             self.dir.join(format!("{name}.json")),
+            self.dir.join(format!("{name}.md")),
         ] {
             if candidate.exists() {
                 std::fs::remove_file(&candidate)
@@ -118,6 +121,7 @@ impl SkillStore {
             "json" => {
                 serde_json::from_str(&raw).with_context(|| format!("parse json: {path:?}"))?
             }
+            "md" => parse_markdown_skill(&raw, path)?,
             _ => anyhow::bail!("unsupported skill format: {path:?}"),
         };
 
@@ -134,4 +138,115 @@ impl SkillStore {
 pub enum SkillFormat {
     Toml,
     Json,
+}
+
+#[derive(Debug, Deserialize)]
+struct SkillMarkdownFrontmatter {
+    name: String,
+    version: String,
+    description: String,
+    author: String,
+    license: String,
+    allowed_tools: Vec<String>,
+    system_prompt: Option<String>,
+}
+
+fn parse_markdown_skill(raw: &str, path: &Path) -> anyhow::Result<SkillSpec> {
+    let mut lines = raw.lines();
+    let first = lines
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("empty markdown skill: {path:?}"))?;
+    let first = first.trim_start_matches('\u{feff}');
+    if first.trim() != "+++" {
+        anyhow::bail!("markdown skill must start with TOML frontmatter delimiter (+++): {path:?}");
+    }
+
+    let mut frontmatter = String::new();
+    let mut found_end = false;
+    for line in lines.by_ref() {
+        if line.trim() == "+++" {
+            found_end = true;
+            break;
+        }
+        frontmatter.push_str(line);
+        frontmatter.push('\n');
+    }
+    if !found_end {
+        anyhow::bail!("markdown skill missing closing frontmatter delimiter (+++): {path:?}");
+    }
+
+    let fm: SkillMarkdownFrontmatter = toml::from_str(&frontmatter)
+        .with_context(|| format!("parse markdown frontmatter: {path:?}"))?;
+
+    let body = lines.collect::<Vec<_>>().join("\n");
+    let body_prompt = body.trim();
+    let system_prompt = if !body_prompt.is_empty() {
+        body_prompt.to_string()
+    } else if let Some(sp) = fm
+        .system_prompt
+        .as_ref()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+    {
+        sp.to_string()
+    } else {
+        anyhow::bail!("markdown skill missing system prompt body: {path:?}");
+    };
+
+    Ok(SkillSpec {
+        name: fm.name,
+        version: fm.version,
+        description: fm.description,
+        author: fm.author,
+        license: fm.license,
+        system_prompt,
+        allowed_tools: fm.allowed_tools,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_markdown_skill_frontmatter_and_body() {
+        let raw = r#"+++
+name = "pdf_summarizer"
+version = "0.1.0"
+description = "Summarize a PDF into a short brief."
+author = "Your Name"
+license = "Apache-2.0"
+allowed_tools = ["read_file", "text_summarize"]
++++
+You are a helpful summarizer."#;
+        let spec = parse_markdown_skill(raw, Path::new("skills/pdf_summarizer.md")).unwrap();
+        assert_eq!(spec.name, "pdf_summarizer");
+        assert_eq!(spec.allowed_tools, vec!["read_file", "text_summarize"]);
+        assert_eq!(spec.system_prompt, "You are a helpful summarizer.");
+    }
+
+    #[test]
+    fn markdown_skill_can_use_system_prompt_from_frontmatter_when_body_empty() {
+        let raw = r#"+++
+name = "hello"
+version = "0.1.0"
+description = "Say hello."
+author = "Your Name"
+license = "Apache-2.0"
+allowed_tools = ["text_summarize"]
+system_prompt = "Hello from frontmatter."
++++
+"#;
+        let spec = parse_markdown_skill(raw, Path::new("skills/hello.md")).unwrap();
+        assert_eq!(spec.system_prompt, "Hello from frontmatter.");
+    }
+
+    #[test]
+    fn rejects_markdown_without_frontmatter_delimiters() {
+        let raw = "name = \"x\"";
+        let err = parse_markdown_skill(raw, Path::new("skills/x.md")).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("must start with TOML frontmatter delimiter"));
+    }
 }
