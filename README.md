@@ -99,6 +99,7 @@ The `skills/` directory includes ready-to-use Markdown skills:
 - `frontend-bug-reproducer` - convert frontend bug reports into a minimal repro + Playwright test + GitHub-ready report
 - `paper_research` - research and curate academic papers for a topic
 - `image_generation` - emit a complete image-generation spec with production-ready prompts
+- `prompt_refiner` - rewrite vague prompts into clear, token-efficient LLM-ready instructions
 - `discussion` - guide interactive codebase discussion before planning or implementation
 - `pdf_summaries` - summarize PDF-derived content into structured Markdown briefs
 
