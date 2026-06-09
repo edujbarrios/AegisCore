@@ -1,116 +1,125 @@
-# AegisCore
+<p align="center">
+  <img src="docs/images/frontend-dark.png" alt="AegisCore skills frontend" />
+</p>
 
-AegisCore is the rust based software to display and interact with codex skills used by Eduardo J. Barrios.
+<h1 align="center">AegisCore</h1>
+
+<p align="center"><strong>Local-first skill runtime for building, validating, and running declarative Codex-style skills.</strong></p>
 
 Status: early-stage / experimental.
 
-## What you get
+## Intention
 
-- **CLI + HTTP server** to create, list, inspect, run, and delete skills.
-- **Declarative skills** stored as `skills/*.toml`, `skills/*.json`, or `skills/*.md` (validated with JSON Schema).
-- **Tool allowlisting** per-skill (`allowed_tools`) with OpenAI-style function tool definitions.
-- **Safe defaults**:
-  - Filesystem tools are sandboxed to a configurable root and block `..` traversal and absolute paths.
-  - `http_get` blocks localhost and private/loopback/link-local IP ranges.
-  - `shell_command` exists but is disabled unless explicitly enabled.
+AegisCore exists to make skill development practical and repeatable.  
+Instead of keeping prompts and tool contracts scattered across notes, AegisCore gives you one place to:
 
-## Quickstart
+- define skills as files (`.toml`, `.json`, `.md`)
+- validate and inspect them consistently
+- run them from CLI or HTTP
+- keep tool access controlled by explicit allowlists
 
-Prereqs: Rust toolchain (stable).
+The project is designed for local development workflows where you want fast iteration with safer defaults.
 
-Clone the repo:
+## What the software provides
+
+- **CLI + HTTP server** for create, list, inspect, run, and delete workflows.
+- **Declarative skill formats** validated with JSON Schema.
+- **Per-skill tool allowlisting** through `allowed_tools`.
+- **Safe-by-default runtime controls**:
+  - Filesystem tools are restricted to a configured root and block traversal/absolute paths.
+  - `http_get` blocks localhost and private/loopback/link-local targets.
+  - `shell_command` is available but disabled unless explicitly enabled.
+
+## How to use AegisCore
+
+Prerequisite: Rust stable toolchain.
+
+1. Clone and enter the repository:
 
 ```bash
 git clone https://github.com/edujbarrios/AegisCore.git
 cd AegisCore
 ```
 
-Initialize a workspace (creates `docs/`, `examples/`, `skills/`, `modules/`, plus `aegiscore.toml` and `.env.example` if missing):
+2. Initialize the local workspace:
 
 ```bash
 cargo run -- init
 ```
 
-Optionally configure an OpenAI-compatible API key:
+This creates expected folders (`docs/`, `examples/`, `skills/`, `modules/`) and default config files when missing.
+
+3. (Optional) configure an OpenAI-compatible API key:
 
 ```bash
 export OPENAI_API_KEY="..."
 ```
 
-Create a skill:
+4. Create and inspect a skill:
 
 ```bash
 cargo run -- create "Create a PDF summarizer"
-```
-
-List and inspect skills:
-
-```bash
 cargo run -- list
 cargo run -- inspect pdf_summarizer
 ```
 
-Run a skill (if no LLM credentials are configured, AegisCore falls back to a local provider):
+5. Run a skill with input:
 
 ```bash
 cargo run -- run pdf_summarizer --input input.json
 ```
 
-This repo also includes a couple of ready-to-use Markdown skills in `skills/`:
-- `github_commit` - drafts a Conventional Commit message from a diff/summary input
-- `github_pr` - drafts a GitHub PR title + body from a diff/summary input
-- `frontend-bug-reproducer` - turns frontend bug reports into a minimal repro + Playwright test + GitHub-ready report
-- `paper_research` - researches and curates academic papers for a topic using public scholarly APIs
-- `image_generation` - outputs a complete, parameterized image-generation spec with production-ready prompts
-- `discussion` - guides interactive codebase discussions before planning or implementation
-
-`github_commit` and `github_pr` emit **strict JSON**. The generated text is ready to paste: `github_commit.commit.full_message` is a complete Conventional Commit message, and `github_pr.pr.body_markdown` is a Markdown PR description.
-
-`frontend-bug-reproducer` emits a **single GitHub-ready Markdown report** (inside the `output` string).
-`image_generation` emits **strict JSON** with prompt, negative prompt, alternatives, and full generation parameters.
-
-Example input (`input.json`):
+Example `input.json`:
 
 ```json
 { "summary": "Fix skill markdown parsing", "issues": ["#123"] }
 ```
 
-Start the HTTP server:
+6. Start the server and open the frontend:
 
 ```bash
 cargo run -- serve
 ```
 
-Then open the skills frontend at `http://127.0.0.1:8787/`.
+Frontend URL: `http://127.0.0.1:8787/`
 
-## Skills Frontend
+## Included example skills
 
-The built-in dark themed TypeScript frontend renders skills as interactive cards with quick actions to:
-- open full skill details
-- copy the system prompt
-- copy full skill JSON for paste-ready sharing
+The `skills/` directory includes ready-to-use Markdown skills:
 
-![AegisCore skills frontend](docs/images/frontend-dark.png)
+- `github_commit` - drafts a Conventional Commit message from diff/summary input
+- `github_pr` - drafts a GitHub PR title and body from diff/summary input
+- `frontend-bug-reproducer` - turns frontend bug reports into a minimal repro + Playwright test + GitHub-ready report
+- `paper_research` - researches and curates academic papers for a topic
+- `image_generation` - emits a complete image-generation spec with production-ready prompts
+- `discussion` - guides interactive codebase discussion before planning or implementation
+
+Output highlights:
+
+- `github_commit` and `github_pr` emit strict JSON
+- `frontend-bug-reproducer` emits one GitHub-ready Markdown report (`output`)
+- `image_generation` emits strict JSON with prompt variants and generation parameters
 
 ## Configuration
 
-By default, AegisCore loads `aegiscore.toml` if present; otherwise it uses built-in defaults. You can pass an explicit config path with `--config <path>`.
+AegisCore reads `aegiscore.toml` by default (when present), or uses built-in defaults.  
+You can provide a path with `--config <path>`.
 
-Key settings:
+Common settings:
 
 - `llm.base_url`, `llm.model`, `llm.api_key_env`
 - `runtime.max_tool_rounds`
-- `runtime.fs_root` (filesystem sandbox root for `read_file` / `write_file` / `list_files`)
-- `runtime.allow_dangerous_tools` (enables `shell_command`)
-- size/time limits: `runtime.max_read_bytes`, `runtime.max_write_bytes`, `runtime.http_max_bytes`, `runtime.http_timeout_ms`, `runtime.shell_timeout_ms`
+- `runtime.fs_root`
+- `runtime.allow_dangerous_tools`
+- `runtime.max_read_bytes`, `runtime.max_write_bytes`, `runtime.http_max_bytes`, `runtime.http_timeout_ms`, `runtime.shell_timeout_ms`
 - `server.host`, `server.port`
 
 ## Skill format
 
-Skills are TOML/JSON documents (or Markdown with frontmatter) with the following required fields:
-`name`, `version`, `description`, `author`, `license`, `system_prompt`, `allowed_tools`.
+Skills are TOML/JSON documents, or Markdown with frontmatter.  
+Required fields: `name`, `version`, `description`, `author`, `license`, `system_prompt`, `allowed_tools`.
 
-Minimal TOML example:
+Minimal TOML:
 
 ```toml
 name = "pdf_summarizer"
@@ -122,7 +131,7 @@ system_prompt = "You are a helpful summarizer."
 allowed_tools = ["read_file", "text_summarize"]
 ```
 
-Minimal Markdown example (YAML frontmatter + body). The Markdown body is used as the `system_prompt` that gets sent straight to the agent as its `system` message:
+Minimal Markdown (YAML frontmatter + body as `system_prompt`):
 
 ```md
 ---
@@ -138,9 +147,9 @@ allowed-tools:
 You are a helpful summarizer.
 ```
 
-Legacy `+++` TOML frontmatter in Markdown skills is also supported for backward compatibility.
+Legacy `+++` TOML frontmatter in Markdown is still supported.
 
-## HTTP API (server mode)
+## HTTP API
 
 When running `cargo run -- serve`, the server exposes:
 
@@ -161,13 +170,13 @@ curl -s http://127.0.0.1:8787/health
 
 ## Security notes
 
-AegisCore is intended to run as a local tool with conservative defaults, but it is **not** a hardened sandbox:
+AegisCore is intended for local usage with conservative defaults, not as a hardened sandbox.
 
-- `shell_command` is disabled unless you set `runtime.allow_dangerous_tools=true`.
-- Filesystem access is restricted to `runtime.fs_root`, but you should still treat skills as code-like inputs.
-- Network requests via `http_get` are limited and block local/private targets to reduce SSRF risk.
+- `shell_command` stays disabled unless `runtime.allow_dangerous_tools=true`.
+- Filesystem access is limited by `runtime.fs_root`, but skills should still be treated as code-like input.
+- `http_get` applies SSRF-oriented restrictions for local/private targets.
 
-If you discover a security issue, please follow `SECURITY.md`.
+For vulnerability reports, follow `SECURITY.md`.
 
 ## Contributing
 
