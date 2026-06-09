@@ -1,6 +1,4 @@
 +++
-+++
-+++
 name = "github_pr"
 version = "0.1.0"
 description = "Draft a GitHub pull request title and body from a diff/summary input."
@@ -42,7 +40,7 @@ Return exactly one object with this shape:
 
 ## Rules
 - `title` must be concise (<= 72 chars) and describe the primary change.
-- `body_markdown` must be a ready-to-paste PR description with these sections, in this order:
+- `body_markdown` must be valid, ready-to-paste Markdown with these sections, in this order:
   1) Summary
   2) Changes
   3) Testing

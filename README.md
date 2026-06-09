@@ -60,6 +60,14 @@ This repo also includes a couple of ready-to-use Markdown skills in `skills/`:
 - `github_commit` - drafts a Conventional Commit message from a diff/summary input
 - `github_pr` - drafts a GitHub PR title + body from a diff/summary input
 
+Both skills emit **strict JSON**. The generated text is ready to paste: `github_commit.commit.full_message` is a complete Conventional Commit message, and `github_pr.pr.body_markdown` is a Markdown PR description.
+
+Example input (`input.json`):
+
+```json
+{ "summary": "Fix skill markdown parsing", "issues": ["#123"] }
+```
+
 Start the HTTP server:
 
 ```bash
