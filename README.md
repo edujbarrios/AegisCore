@@ -62,6 +62,7 @@ This repo also includes a couple of ready-to-use Markdown skills in `skills/`:
 - `frontend-bug-reproducer` - turns frontend bug reports into a minimal repro + Playwright test + GitHub-ready report
 - `paper_research` - researches and curates academic papers for a topic using public scholarly APIs
 - `image_generation` - outputs a complete, parameterized image-generation spec with production-ready prompts
+- `discussion` - guides interactive codebase discussions before planning or implementation
 
 `github_commit` and `github_pr` emit **strict JSON**. The generated text is ready to paste: `github_commit.commit.full_message` is a complete Conventional Commit message, and `github_pr.pr.body_markdown` is a Markdown PR description.
 
@@ -95,7 +96,7 @@ Key settings:
 
 ## Skill format
 
-Skills are TOML/JSON documents (or Markdown with TOML frontmatter) with the following required fields:
+Skills are TOML/JSON documents (or Markdown with frontmatter) with the following required fields:
 `name`, `version`, `description`, `author`, `license`, `system_prompt`, `allowed_tools`.
 
 Minimal TOML example:
@@ -110,19 +111,23 @@ system_prompt = "You are a helpful summarizer."
 allowed_tools = ["read_file", "text_summarize"]
 ```
 
-Minimal Markdown example (frontmatter + body). The Markdown body is used as the `system_prompt` that gets sent straight to the agent as its `system` message:
+Minimal Markdown example (YAML frontmatter + body). The Markdown body is used as the `system_prompt` that gets sent straight to the agent as its `system` message:
 
 ```md
-+++
-name = "pdf_summarizer"
-version = "0.1.0"
-description = "Summarize a PDF into a short brief."
-author = "Your Name"
-license = "Apache-2.0"
-allowed_tools = ["read_file", "text_summarize"]
-+++
+---
+name: pdf_summarizer
+version: "0.1.0"
+description: Summarize a PDF into a short brief.
+author: Your Name
+license: Apache-2.0
+allowed-tools:
+  - read_file
+  - text_summarize
+---
 You are a helpful summarizer.
 ```
+
+Legacy `+++` TOML frontmatter in Markdown skills is also supported for backward compatibility.
 
 ## HTTP API (server mode)
 

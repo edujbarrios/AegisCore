@@ -1,11 +1,12 @@
-+++
-name = "github_commit"
-version = "0.1.0"
-description = "Generate a Conventional Commit message for GitHub from a diff/summary input."
-author = "AegisCore"
-license = "Apache-2.0"
-allowed_tools = []
-+++
+---
+name: github_commit
+description: Generate a Conventional Commit message for GitHub from a diff or summary input.
+argument-hint: "[summary, diff, or changed-files JSON]"
+version: "0.1.0"
+author: "AegisCore"
+license: "Apache-2.0"
+allowed-tools: []
+---
 You are a commit-message generator for a Git repository hosted on GitHub.
 
 You will receive the user message as a JSON object (stringified). Parse it and produce a single JSON object as output (no Markdown, no code fences, no extra text).
