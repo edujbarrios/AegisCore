@@ -206,9 +206,63 @@ fn resolve_sandbox_path(root: &Path, input: &str) -> anyhow::Result<PathBuf> {
 
     let joined = root.join(rel);
     let canon_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
-    let canon_joined = std::fs::canonicalize(&joined).unwrap_or(joined);
-    if !canon_joined.starts_with(&canon_root) {
+
+    let mut existing = joined.as_path();
+    while !existing.exists() {
+        existing = existing
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("path has no parent: {input}"))?;
+    }
+
+    let canon_existing = std::fs::canonicalize(existing)?;
+    if !canon_existing.starts_with(&canon_root) {
         anyhow::bail!("path escapes sandbox root");
     }
-    Ok(canon_joined)
+
+    let remainder = joined
+        .strip_prefix(existing)
+        .map_err(|_| anyhow::anyhow!("failed to resolve path: {input}"))?;
+    let resolved = canon_existing.join(remainder);
+    if !resolved.starts_with(&canon_root) {
+        anyhow::bail!("path escapes sandbox root");
+    }
+    Ok(resolved)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_regular_relative_path() {
+        let root = std::env::temp_dir().join(format!("aegiscore-root-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&root).expect("create root");
+
+        let resolved = resolve_sandbox_path(&root, "nested/file.txt").expect("resolve path");
+        assert!(resolved.starts_with(&root));
+        assert!(resolved.ends_with("nested/file.txt"));
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_nonexistent_path_under_symlink_that_points_outside_root() {
+        use std::os::unix::fs::symlink;
+
+        let root = std::env::temp_dir().join(format!("aegiscore-root-{}", uuid::Uuid::new_v4()));
+        let outside =
+            std::env::temp_dir().join(format!("aegiscore-outside-{}", uuid::Uuid::new_v4()));
+
+        std::fs::create_dir_all(&root).expect("create root");
+        std::fs::create_dir_all(&outside).expect("create outside");
+        symlink(&outside, root.join("escape")).expect("create symlink");
+
+        let err = resolve_sandbox_path(&root, "escape/new.txt").expect_err("should reject escape");
+        assert!(err.to_string().contains("path escapes sandbox root"));
+
+        let _ = std::fs::remove_file(root.join("escape"));
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_dir_all(&outside);
+    }
 }
