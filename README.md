@@ -97,6 +97,7 @@ The `skills/` directory includes ready-to-use Markdown skills:
 - `github_commit` - draft a Conventional Commit message from diff/summary input
 - `github_pr` - draft a GitHub PR title and body from diff/summary input
 - `frontend-bug-reproducer` - convert frontend bug reports into a minimal repro + Playwright test + GitHub-ready report
+- `bug-audit-fix-prompt` - audit code for likely bugs/errors, discuss findings with evidence, and generate a structured fix prompt
 - `paper_research` - research and curate academic papers for a topic
 - `image_generation` - emit a complete image-generation spec with production-ready prompts
 - `prompt_refiner` - rewrite vague prompts into clear, token-efficient LLM-ready instructions
