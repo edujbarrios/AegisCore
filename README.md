@@ -102,6 +102,8 @@ The `skills/` directory includes ready-to-use Markdown skills:
 - `prompt_refiner` - rewrite vague prompts into clear, token-efficient LLM-ready instructions
 - `discussion` - guide interactive codebase discussion before planning or implementation
 - `pdf_summaries` - summarize PDF-derived content into structured Markdown briefs
+- `python_ai_ml_project_setup` - scaffold and harden Python AI/ML projects with linting, typing, testing, and maintainable architecture
+- `rust_ai_ml_project_setup` - scaffold and harden Rust AI/ML projects with strict linting, testing, and modular design patterns
 
 ## Configuration
 
