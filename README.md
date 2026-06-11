@@ -105,6 +105,7 @@ The `skills/` directory includes ready-to-use Markdown skills:
 - `pdf_summaries` - summarize PDF-derived content into structured Markdown briefs
 - `python_ai_ml_project_setup` - scaffold and harden Python AI/ML projects with linting, typing, testing, and maintainable architecture
 - `rust_ai_ml_project_setup` - scaffold and harden Rust AI/ML projects with strict linting, testing, and modular design patterns
+- `medium_article_discovery` - discover and rank interesting Medium articles focused on software development and AI
 
 ## Configuration
 
